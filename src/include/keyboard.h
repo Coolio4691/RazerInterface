@@ -1,5 +1,5 @@
-#ifndef __KEYBOARD_H__
-#define __KEYBOARD_H__
+#ifndef __RAZER_KEYBOARD_H__
+#define __RAZER_KEYBOARD_H__
 #include "devicelighting.h"
 
 struct keyboard {

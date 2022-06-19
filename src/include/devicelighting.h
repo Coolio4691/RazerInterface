@@ -1,5 +1,5 @@
-#ifndef __DEVICE_LIGHTING_H__
-#define __DEVICE_LIGHTING_H__
+#ifndef __RAZER_DEVICE_LIGHTING_H__
+#define __RAZER_DEVICE_LIGHTING_H__
 #include "devicematrix.h"
 #include "dbus_handler.h"
 

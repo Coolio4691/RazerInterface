@@ -1,5 +1,5 @@
-#ifndef __DEVICE_MANAGER_H__
-#define __DEVICE_MANAGER_H__
+#ifndef __RAZER_DEVICE_MANAGER_H__
+#define __RAZER_DEVICE_MANAGER_H__
 #include <dbus/dbus.h>
 #include "devicematrix.h"
 

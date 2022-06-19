@@ -1,5 +1,5 @@
-#ifndef __MOUSE_H__
-#define __MOUSE_H__
+#ifndef __RAZER_MOUSE_H__
+#define __RAZER_MOUSE_H__
 #include "devicelighting.h"
 #include "devicemanager.h"
 

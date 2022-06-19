@@ -231,6 +231,46 @@ char* devicemanager_get_device_name(char* device) {
     return name;
 }
 
+struct VIDPID devicemanager_get_device_vidpid(char* device) {
+    struct VIDPID VIDPID;
+
+    // if the device is not found return none
+    if(!devicemanager_has_device(device)) {
+        return VIDPID;
+    }
+
+    // create iter for getting argument
+    DBusMessage* msg;
+    DBusMessageIter iter, values;
+    int code;
+
+    // if error return nothing
+    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getVidPid", &msg) <= -1) {
+        printf("GetDeviceVIDPID Error: %d", code);
+
+        return VIDPID;
+    }
+
+    dbus_message_iter_init(msg, &iter);
+    dbus_message_iter_recurse(&iter, &values);
+    dbus_message_unref(msg);
+
+    int vid;
+    int pid;
+
+    // get string from message arg
+    dbus_message_iter_get_basic(&values, &vid);
+    dbus_message_iter_next(&values);
+    dbus_message_iter_get_basic(&values, &pid);
+
+    // format string to hex
+    sprintf(VIDPID.vid, "%04X", vid);
+    sprintf(VIDPID.pid, "%04X", pid);
+    
+    // return name string
+    return VIDPID;
+}
+
 int devicemanager_get_device_matrix(char* device, struct matrix* matrix) {    
     // if the device is not found return none
     if(!devicemanager_has_device(device)) {

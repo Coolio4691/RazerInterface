@@ -1,10 +1,12 @@
 #ifndef __RAZER_KEYBOARD_H__
 #define __RAZER_KEYBOARD_H__
 #include "devicelighting.h"
+#include "devicemanager.h"
 
 struct keyboard {
     char* id;
     char* name;
+    struct VIDPID VIDPID;
 
     struct lighting lighting;
 };

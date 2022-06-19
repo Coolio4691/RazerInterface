@@ -6,6 +6,7 @@
 struct mouse {
     char* id;
     char* name;
+    struct VIDPID VIDPID; 
 
     struct lighting lighting;
 };

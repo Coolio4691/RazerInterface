@@ -5,9 +5,10 @@
 #include <string.h>
 
 int mouse_from_id(char* id, struct mouse* mouse) {
-    (*mouse).id = id;
-    (*mouse).name = devicemanager_get_device_name(id);
-
+    mouse->id = id;
+    mouse->name = devicemanager_get_device_name(id);
+    mouse->VIDPID = devicemanager_get_device_vidpid(id);
+    
     device_lighting_init(id, &mouse->lighting);
 
     return 0;

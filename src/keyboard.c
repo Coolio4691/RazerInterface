@@ -1,6 +1,5 @@
 #include "keyboard.h"
 #include "dbus_handler.h"
-#include "devicemanager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,6 +8,8 @@
 int keyboard_from_id(char* id, struct keyboard* keyboard) {
     keyboard->id = id;
     keyboard->name = devicemanager_get_device_name(id);
+    keyboard->VIDPID = devicemanager_get_device_vidpid(id);
+    
     device_lighting_init(id, &keyboard->lighting);
 
     return 0;
@@ -20,7 +21,7 @@ void keyboard_draw(struct keyboard* keyboard) {
 
     // get bytes 
     lighting_colour_bytes(&keyboard->lighting, &bytes, &bytesSize);
-    
+
     // create connection and error variable
     DBusError err;
     DBusConnection* con;

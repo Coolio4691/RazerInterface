@@ -67,9 +67,9 @@ int* key_2D_from_index(struct lighting* lighting, int index) {
 }
 
 
-void lighting_row_bytes(struct lighting* lighting, int row, unsigned char** bytes, int* bytesSize) {
+void lighting_row_bytes(struct lighting* lighting, int row, unsigned char** bytes, size_t* bytesSize) {
     // allocate 3 + (column size * rgb(3))
-    *bytes = malloc(3 + ((lighting->matrix.cols - 1) * 3));
+    *bytes = malloc((3 + ((lighting->matrix.cols - 1) * 3) * sizeof(unsigned char)));
     // set size to 0
     *bytesSize = 0;
 
@@ -91,15 +91,17 @@ void lighting_row_bytes(struct lighting* lighting, int row, unsigned char** byte
     }
 }
 
-void lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes, int* bytesSize) {
+void lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes, size_t* bytesSize) {
     // create variable to store as a buffer for the byttes
     unsigned char* oldBytes;
-    int oldBytesSize = 0;
+    size_t oldBytesSize = 0;
 
-    for(int row = 0; row < lighting->matrix.rows; row++) {
+    *bytesSize = 0;
+
+    for(size_t row = 0; row < lighting->matrix.rows; row++) {
         // if row > 0 allocate oldbytes and free current bytes array
         if(row > 0) {
-            oldBytes = malloc(*bytesSize);
+            oldBytes = malloc((*bytesSize) * sizeof(unsigned char));
 
             for(int i = 0; i < *bytesSize; i++) {
                 oldBytes[i] = (*bytes)[i];
@@ -112,15 +114,15 @@ void lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes, int
 
         // make variable to hold the bytes returned by lighting_row_bytes
         unsigned char* tempBytes;
-        int tempBytesSize;
+        size_t tempBytesSize;
         
         lighting_row_bytes(lighting, row, &tempBytes, &tempBytesSize);
         // allocate new memory for bytes
-        *bytes = malloc((*bytesSize) + tempBytesSize);
+        *bytes = malloc(((*bytesSize) + tempBytesSize) * sizeof(unsigned char));
 
         // if row > 0 set the bytes back to its old bytes
         if(row > 0) {
-            for(int i = 0; i < oldBytesSize; i++) {
+            for(size_t i = 0; i < oldBytesSize; i++) {
                 (*bytes)[i] = oldBytes[i];
             }
 
@@ -129,7 +131,7 @@ void lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes, int
         }
 
         // append the bytes to the top of bytes
-        for(int i = 0; i < tempBytesSize; i++) {
+        for(size_t i = 0; i < tempBytesSize; i++) {
             (*bytes)[(*bytesSize) + i] = tempBytes[i];
         }
 

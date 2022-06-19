@@ -16,7 +16,7 @@ int mouse_from_id(char* id, struct mouse* mouse) {
 
 void mouse_draw(struct mouse* mouse) {
     unsigned char* bytes;
-    int bytesSize;
+    size_t bytesSize;
 
     // get bytes 
     lighting_colour_bytes(&mouse->lighting, &bytes, &bytesSize);

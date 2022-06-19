@@ -16,10 +16,11 @@ int keyboard_from_id(char* id, struct keyboard* keyboard) {
 
 void keyboard_draw(struct keyboard* keyboard) {
     unsigned char* bytes;
-    int bytesSize;
+    size_t bytesSize;
 
     // get bytes 
     lighting_colour_bytes(&keyboard->lighting, &bytes, &bytesSize);
+    printf("%lu\n", bytesSize);
 
     // create connection and error variable
     DBusError err;
@@ -66,26 +67,22 @@ void keyboard_draw(struct keyboard* keyboard) {
     dbus_message_append_args(message, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &bytes, bytesSize, DBUS_TYPE_INVALID);
     free(bytes);
     
-    // send message then wait
-    dbus_connection_send_with_reply(con, message, &pending, 50);
+    // send message
+    dbus_connection_send(con, message, NULL);
     
-    // wait until reply
-    dbus_pending_call_block(pending);
-
-    // set msg to reply
-    DBusMessage* reply = dbus_pending_call_steal_reply(pending);
-
+    dbus_message_unref(message);
     // free the error variable
     dbus_error_free(&err); 
 
     // flush connection
     dbus_connection_flush(con);
 
-    DBusMessage* msg;
+    //DBusMessage* msg;
 
     // draw keyboard colours
-    devicemanager_get_device_property(keyboard->id, "razer.device.lighting.chroma", "setCustom", &msg); // set custom effect again to load new buffer
-    dbus_message_unref(msg);
+    //devicemanager_get_device_property(keyboard->id, "razer.device.lighting.chroma", "setCustom", &msg); // set custom effect again to load new buffer
+    devicemanager_call_device_method_no_args(keyboard->id, "razer.device.lighting.chroma", "setCustom"); // set custom effect again to load new buffer
+    //dbus_message_unref(msg);
     // reset lighting array to all unset
     device_lighting_reset(&keyboard->lighting);
 }

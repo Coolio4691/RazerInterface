@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.2)
+project(razer VERSION 0.1.0)
+
+set (CMAKE_INSTALL_PREFIX /usr)
+set(CMAKE_MESSAGE_LOG_LEVEL "ALL")
+
+file(GLOB_RECURSE RAZER_LIBRARY_SOURCE_FILES ${CMAKE_SOURCE_DIR}/src/*.c)
+file(GLOB_RECURSE RAZER_LIBRARY_HEADER_FILES 
+    ${CMAKE_SOURCE_DIR}/src/include/*.h
+)
+
+
+add_library(${PROJECT_NAME} SHARED ${RAZER_LIBRARY_SOURCE_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1
+    PUBLIC_HEADER "${RAZER_LIBRARY_HEADER_FILES}")
+
+configure_file(${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/include)
+
+include(GNUInstallDirs)
+install(TARGETS ${PROJECT_NAME}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+
+
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(DBUS REQUIRED dbus-1)
+include_directories(${DBUS_INCLUDE_DIRS})
+link_directories(${DBUS_LIBRARY_DIRS})
+
+target_link_libraries(${PROJECT_NAME} ${DBUS_LIBRARIES})

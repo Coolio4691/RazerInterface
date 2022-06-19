@@ -20,8 +20,7 @@ void keyboard_draw(struct keyboard* keyboard) {
 
     // get bytes 
     lighting_colour_bytes(&keyboard->lighting, &bytes, &bytesSize);
-    printf("%lu\n", bytesSize);
-
+    
     // create connection and error variable
     DBusError err;
     DBusConnection* con;

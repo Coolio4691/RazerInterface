@@ -100,14 +100,13 @@ int devicemanager_has_device(char* device) {
     // loop through devices and compare if it is device
     for(int i = 0; i < devicesLen; i++) {
         if(strcmp(devices[i], device) == 0) {
-            // set free devices then return true
+            // free devices then return true
             free(devices);
             return 1;
         }
     }
 
-
-    // if the device is not found return false and free devices
+    // if the device is not found free devices and return false 
     free(devices);
     return 0;
 }
@@ -130,7 +129,6 @@ int devicemanager_get_device_property(char* device, char* interface, char* prope
 
     // send message to dbus sessionbus getting device type
     send_message(DBUS_BUS_SESSION, "org.razer", pathStr, interface, property, msg);
-
     // free pathstr
     free(pathStr);
 
@@ -156,7 +154,6 @@ int devicemanager_call_device_method_no_args(char* device, char* interface, char
 
     // send message to dbus sessionbus getting device type
     send_message_no_reply(DBUS_BUS_SESSION, "org.razer", pathStr, interface, property);
-
     // free pathstr
     free(pathStr);
 
@@ -204,11 +201,13 @@ DeviceType devicemanager_get_device_type(char* device) {
 char* devicemanager_get_device_name(char* device) {
     // if the device is not found return none
     if(!devicemanager_has_device(device)) {
-        return "";
+        return NULL;
     }
 
-    // create iter for getting argument
+    // create message variable
     DBusMessage* msg;
+
+    // create iter for getting message arguments
     DBusMessageIter iter;
     int code;
 
@@ -216,16 +215,19 @@ char* devicemanager_get_device_name(char* device) {
     if(code = devicemanager_get_device_property(device, "razer.device.misc", "getDeviceName", &msg) <= -1) {
         printf("GetDeviceName Error: %d", code);
 
-        return "";
+        return NULL;
     }
-
-    dbus_message_iter_init(msg, &iter);
-    dbus_message_unref(msg);
 
     // create char* for iter return value
     char* name;
+
+    // get args from message
+    dbus_message_iter_init(msg, &iter);
+
     // get string from message arg
     dbus_message_iter_get_basic(&iter, &name);
+    // unref msg
+    dbus_message_unref(msg);
 
     // return name string
     return name;
@@ -251,23 +253,35 @@ struct VIDPID devicemanager_get_device_vidpid(char* device) {
         return VIDPID;
     }
 
+    // get args from msg
     dbus_message_iter_init(msg, &iter);
+    // get int[2] from first arg
     dbus_message_iter_recurse(&iter, &values);
-    dbus_message_unref(msg);
 
     int vid;
     int pid;
 
-    // get string from message arg
+    // get int from array
     dbus_message_iter_get_basic(&values, &vid);
+    // get next value
     dbus_message_iter_next(&values);
+    // get int from array
     dbus_message_iter_get_basic(&values, &pid);
 
-    // format string to hex
+    // unref msg
+    dbus_message_unref(msg);
+
+    // set vidint to vid
+    VIDPID.vidInt = vid;
+    // set pidint to pid
+    VIDPID.pidInt = pid;
+
+    // format int to hex string
     sprintf(VIDPID.vid, "%04X", vid);
+    // format int to hex string
     sprintf(VIDPID.pid, "%04X", pid);
     
-    // return name string
+    // return vidpid struct with values
     return VIDPID;
 }
 
@@ -277,8 +291,10 @@ int devicemanager_get_device_matrix(char* device, struct matrix* matrix) {
         return -1;
     }
 
-    // create iter for getting argument
+    // create msg variable
     DBusMessage* msg;
+
+    // create iter for getting arguments
     DBusMessageIter iter, values;
     int code;
 
@@ -291,15 +307,22 @@ int devicemanager_get_device_matrix(char* device, struct matrix* matrix) {
 
     // initialize iter value
     dbus_message_iter_init(msg, &iter); 
+    // get int[2] from first arg
     dbus_message_iter_recurse(&iter, &values);
     
+    // value buffer
     int val;
 
-    // get rows and cols from array
+    // get rows from array
     dbus_message_iter_get_basic(&values, &val);
+    // set matrix rows to output
     matrix->rows = val;
+
+    // get next value
     dbus_message_iter_next(&values);
+    // get cols from array
     dbus_message_iter_get_basic(&values, &val);
+    // set matrix cols to val
     matrix->cols = val;
 
     // return name string

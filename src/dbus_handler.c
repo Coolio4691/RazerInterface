@@ -3,8 +3,8 @@
 
 DBusHandlerCode send_message(DBusBusType bus, char* bus_name, char* path, char* iface, char* method, DBusMessage** msg) {
     // create connection and error variable
-    DBusError err;
     DBusConnection* con;
+    DBusError err;
 
     // initialize error variable
     dbus_error_init(&err);
@@ -51,8 +51,8 @@ DBusHandlerCode send_message(DBusBusType bus, char* bus_name, char* path, char* 
 
 DBusHandlerCode send_message_no_reply(DBusBusType bus, char* bus_name, char* path, char* iface, char* method) {
     // create connection and error variable
-    DBusError err;
     DBusConnection* con;
+    DBusError err;
 
     // initialize error variable
     dbus_error_init(&err);
@@ -74,12 +74,13 @@ DBusHandlerCode send_message_no_reply(DBusBusType bus, char* bus_name, char* pat
         return BUSCONNECT_ERROR;
     }
 
+    // create message and send
+    DBusMessage* message = dbus_message_new_method_call(bus_name, path, iface, method);
 
-    // create message and send then wait till reply
-    DBusMessage* message;
-    message = dbus_message_new_method_call(bus_name, path, iface, method);
-
+    // set message
     dbus_connection_send(con, message, NULL);
+
+    // unref message
     dbus_message_unref(message);
     // free the error variable
     dbus_error_free(&err); 
@@ -87,5 +88,6 @@ DBusHandlerCode send_message_no_reply(DBusBusType bus, char* bus_name, char* pat
     // flush connection
     dbus_connection_flush(con);
 
+    // return successcode
     return SUCCESS;
 }

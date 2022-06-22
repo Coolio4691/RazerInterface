@@ -8,6 +8,9 @@ typedef enum DeviceType { NONE, KEYBOARD, MOUSE } DeviceType;
 struct VIDPID {
     char vid[5];
     char pid[5];
+
+    int vidInt;
+    int pidInt;
 };
 
 

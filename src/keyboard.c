@@ -16,6 +16,11 @@ int keyboard_from_id(char* id, struct keyboard* keyboard) {
 }
 
 void keyboard_draw(struct keyboard* keyboard) {
+    // if the device is not found return
+    if(!devicemanager_has_device(keyboard->id)) {
+        return;
+    }
+
     unsigned char* bytes;
     size_t bytesSize;
 
@@ -62,37 +67,40 @@ void keyboard_draw(struct keyboard* keyboard) {
 
     // create message and send then wait till reply
     DBusMessage* message = dbus_message_new_method_call("org.razer", pathStr, "razer.device.lighting.chroma", "setKeyRow");
+    // free pathstr variable
+    free(pathStr);
     
     // add byte array to arguments
     dbus_message_append_args(message, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &bytes, bytesSize, DBUS_TYPE_INVALID);
+    // free bytes
     free(bytes);
     
     // send message
     dbus_connection_send(con, message, NULL);
     
+
+    // unref message
     dbus_message_unref(message);
+    
+    
     // free the error variable
     dbus_error_free(&err); 
-
     // flush connection
     dbus_connection_flush(con);
 
-    //DBusMessage* msg;
 
-    // draw keyboard colours
-    //devicemanager_get_device_property(keyboard->id, "razer.device.lighting.chroma", "setCustom", &msg); // set custom effect again to load new buffer
+    // call setcustom method
     devicemanager_call_device_method_no_args(keyboard->id, "razer.device.lighting.chroma", "setCustom"); // set custom effect again to load new buffer
-    //dbus_message_unref(msg);
     // reset lighting array to all unset
     device_lighting_reset(&keyboard->lighting);
 }
 
 void keyboard_set_key_light(struct keyboard* keyboard, int key, int red, int green, int blue) {
     // set rgb at key
-    device_lighting_set_key(&keyboard->lighting, key, red, green, blue);
+    device_lighting_set_led(&keyboard->lighting, key, red, green, blue);
 }
 
 struct rgb keyboard_get_key_light(struct keyboard* keyboard, int key) {
     // get rgb at key
-    return device_lighting_get_key(&keyboard->lighting, key);
+    return device_lighting_get_led(&keyboard->lighting, key);
 }

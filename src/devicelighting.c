@@ -35,22 +35,22 @@ void device_lighting_reset(struct lighting* lighting) {
 };
 
 
-void device_lighting_set_key(struct lighting* lighting, int key, int r, int g, int b) {
+void device_lighting_set_led(struct lighting* lighting, int key, int r, int g, int b) {
     // set key at index to values
     lighting->colourArray[key].red = r;
     lighting->colourArray[key].green = g;
     lighting->colourArray[key].blue = b;
 };
 
-struct rgb device_lighting_get_key(struct lighting* lighting, int key) {
+struct rgb device_lighting_get_led(struct lighting* lighting, int key) {
     // get value from key at index
     return lighting->colourArray[key];
 };
 
 
-int key_index_from_2D(struct lighting* lighting, int x, int y) {
+int key_index_from_2D(struct lighting* lighting, int col, int row) {
     // index = cols * y + x
-    return lighting->matrix.cols * y + x;
+    return lighting->matrix.cols * row + col;
 }
 
 int* key_2D_from_index(struct lighting* lighting, int index) {
@@ -82,7 +82,7 @@ void lighting_row_bytes(struct lighting* lighting, int row, unsigned char** byte
 
     for(int col = 0; col < lighting->matrix.cols; col++) {
         // get rgb values at col, row
-        struct rgb rgb = device_lighting_get_key(lighting, key_index_from_2D(lighting, col, row));
+        struct rgb rgb = device_lighting_get_led(lighting, key_index_from_2D(lighting, col, row));
 
         // append rgb values to the bytes array
         (*bytes)[(*bytesSize)++] = rgb.red;

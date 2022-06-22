@@ -62,37 +62,38 @@ void mouse_draw(struct mouse* mouse) {
 
     // create message and send then wait till reply
     DBusMessage* message = dbus_message_new_method_call("org.razer", pathStr, "razer.device.lighting.chroma", "setKeyRow");
+    // free pathstr variable
+    free(pathStr);
     
     // add byte array to arguments
     dbus_message_append_args(message, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &bytes, bytesSize, DBUS_TYPE_INVALID);
+    // free bytes
+    free(bytes);
     
-    // send message then wait
-    dbus_connection_send_with_reply(con, message, &pending, -1);
-    // wait until reply
-    dbus_pending_call_block(pending);
-
-    // set msg to reply
-    DBusMessage* reply = dbus_pending_call_steal_reply(pending);
-
+    // send message
+    dbus_connection_send(con, message, NULL);
+    
+    // unref message
+    dbus_message_unref(message);
     // free the error variable
     dbus_error_free(&err); 
 
     // flush connection
     dbus_connection_flush(con);
 
-    DBusMessage* msg; // add just to fulfill the function requirements
-    devicemanager_get_device_property(mouse->id, "razer.device.lighting.chroma", "setCustom", &msg); // set custom effect again to load new buffer
-
-    free(bytes);
+    // call setcustom method
+    devicemanager_call_device_method_no_args(mouse->id, "razer.device.lighting.chroma", "setCustom"); // set custom effect again to load new buffer
+    
+    // reset lighting array to all unset
     device_lighting_reset(&mouse->lighting);
 }
 
 void mouse_set_light(struct mouse* mouse, int light, int red, int green, int blue) {
     // set rgb at key
-    device_lighting_set_key(&mouse->lighting, light, red, green, blue);
+    device_lighting_set_led(&mouse->lighting, light, red, green, blue);
 }
 
 struct rgb mouse_get_light(struct mouse* mouse, int light) {
     // get rgb at key
-    return device_lighting_get_key(&mouse->lighting, light);
+    return device_lighting_get_led(&mouse->lighting, light);
 }

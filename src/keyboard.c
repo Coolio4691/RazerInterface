@@ -6,11 +6,19 @@
 #include <string.h>
 
 int keyboard_from_id(char* id, struct keyboard* keyboard) {
-    keyboard->id = id;
-    keyboard->name = devicemanager_get_device_name(id);
-    keyboard->VIDPID = devicemanager_get_device_vidpid(id);
+    // get around weird error with id
+    size_t idLen = strlen(id);
     
-    device_lighting_init(id, &keyboard->lighting);
+    keyboard->id = (char*)malloc((idLen + 1) * sizeof(char));
+    memcpy(keyboard->id, id, idLen);
+    keyboard->id[idLen] = 0;
+    
+    // set name and vidpid
+    keyboard->name = devicemanager_get_device_name(keyboard->id);
+    keyboard->VIDPID = devicemanager_get_device_vidpid(keyboard->id);
+    
+    // init device lighting
+    device_lighting_init(keyboard->id, &keyboard->lighting);
 
     return 0;
 }
@@ -22,10 +30,9 @@ void keyboard_draw(struct keyboard* keyboard) {
     }
 
     unsigned char* bytes;
-    size_t bytesSize;
 
-    // get bytes 
-    lighting_colour_bytes(&keyboard->lighting, &bytes, &bytesSize);
+    // get lighting array bytes 
+    size_t bytesSize = lighting_colour_bytes(&keyboard->lighting, &bytes);
 
     // create connection and error variable
     DBusError err;
@@ -54,34 +61,33 @@ void keyboard_draw(struct keyboard* keyboard) {
     // create pending call
     DBusPendingCall* pending;
     dbus_bool_t dbret;
+    size_t pathStrSize = strlen(keyboard->id) + 19;
 
-    // create char* for path and devpath
-    char* devPathStr = "/org/razer/device/";
-    char* pathStr = malloc(strlen(devPathStr) + strlen(keyboard->id) + 1);
+    // create char* for path and devpath + null terminator
+    char* pathStr = (char*)malloc(pathStrSize * sizeof(char));
     
     // copy devpathstr contents to pathstr
-    strcpy(pathStr, devPathStr);
+    strcpy(pathStr, "/org/razer/device/");
     // append device id to pathstr
     strcat(pathStr, keyboard->id);
-
+    pathStr[pathStrSize - 1] = 0;
 
     // create message and send then wait till reply
-    DBusMessage* message = dbus_message_new_method_call("org.razer", pathStr, "razer.device.lighting.chroma", "setKeyRow");
+    DBusMessage* msg = dbus_message_new_method_call("org.razer", pathStr, "razer.device.lighting.chroma", "setKeyRow");
     // free pathstr variable
     free(pathStr);
     
     // add byte array to arguments
-    dbus_message_append_args(message, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &bytes, bytesSize, DBUS_TYPE_INVALID);
+    dbus_message_append_args(msg, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &bytes, bytesSize, DBUS_TYPE_INVALID);
     // free bytes
     free(bytes);
     
     // send message
-    dbus_connection_send(con, message, NULL);
+    DBusMessage* message = dbus_connection_send_with_reply_and_block(con, msg, -1, &err);
     
-
     // unref message
     dbus_message_unref(message);
-    
+    dbus_message_unref(msg);
     
     // free the error variable
     dbus_error_free(&err); 

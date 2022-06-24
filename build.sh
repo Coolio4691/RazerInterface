@@ -1,10 +1,9 @@
 #!/bin/bash
 
 mkdir -p build
-cd build
 
-cmake ..
-make
-sudo make install
+cmake --build ./build --config Debug --target all -j 8 --
+cd build
+sudo ninja install
 
 cd ..

@@ -27,7 +27,7 @@ int key_index_from_2D(struct lighting* lighting, int col, int row);
 int* key_2D_from_index(struct lighting* lighting, int index);
 
 
-void lighting_row_bytes(struct lighting* lighting, int row, unsigned char** bytes, size_t* bytesSize);
-void lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes, size_t* bytesSize);
+size_t lighting_row_bytes(struct lighting* lighting, int row, unsigned char** bytes);
+size_t lighting_colour_bytes(struct lighting* lighting, unsigned char** bytes);
 
 #endif

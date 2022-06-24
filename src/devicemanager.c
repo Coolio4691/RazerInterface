@@ -1,5 +1,4 @@
 #include "devicemanager.h"
-#include "dbus_handler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,11 +16,11 @@ void devicemanager_get_devices(char*** deviceIDs, int *deviceIDsLen) {
     int outputLen = 0;
     int oldOutputLen = 0;
 
-    // create message variable for response
-    DBusMessage* msg; 
+    // create message, pending variable for response
+    DBusMessage* message;
 
     // send message to dbus and get response to msg
-    DBusHandlerCode code = send_message(DBUS_BUS_SESSION, "org.razer", "/org/razer", "razer.devices", "getDevices", &msg);
+    DBusHandlerCode code = send_message(DBUS_BUS_SESSION, "org.razer", "/org/razer", "razer.devices", "getDevices", &message);
 
     if(code != SUCCESS) {
         // print dbus error then exit
@@ -34,7 +33,7 @@ void devicemanager_get_devices(char*** deviceIDs, int *deviceIDsLen) {
     DBusMessageIter iter, string;
     
     // initialize iter value
-    dbus_message_iter_init(msg, &iter); 
+    dbus_message_iter_init(message, &iter); 
 
     // create str buffer
     char* str;
@@ -50,8 +49,9 @@ void devicemanager_get_devices(char*** deviceIDs, int *deviceIDsLen) {
         // get str from array
         dbus_message_iter_get_basic(&string, &str);
 
-        // add the returned strings length to the output total length
-        outputLen += strlen(str);
+        // add the returned strings length to the output total length + null terminator
+        size_t strSize = strlen(str);
+        outputLen += strSize;
 
         // if elements > 0 create old output buffer
         if(*deviceIDsLen > 0) {
@@ -68,7 +68,7 @@ void devicemanager_get_devices(char*** deviceIDs, int *deviceIDsLen) {
         }
         
         // allocate memory to output
-        *deviceIDs = malloc(outputLen + 1);
+        *deviceIDs = (char**)malloc(outputLen + 1);
 
         // if elements > 0 copy old output to output
         if(*deviceIDsLen > 0) {
@@ -81,12 +81,13 @@ void devicemanager_get_devices(char*** deviceIDs, int *deviceIDsLen) {
         }
         
         // set output[outputlength + 1] to the returned str
-        (*deviceIDs)[(*deviceIDsLen)++] = str;
+        (*deviceIDs)[*deviceIDsLen] = str;
+        (*deviceIDs)[(*deviceIDsLen)++][strSize] = 0;
     }
     while (dbus_message_iter_next(&string));
 
-    // unref msg
-    dbus_message_unref(msg);
+    // unref return value
+    dbus_message_unref(message);
 }
 
 int devicemanager_has_device(char* device) {
@@ -98,9 +99,8 @@ int devicemanager_has_device(char* device) {
     devicemanager_get_devices(&devices, &devicesLen);
 
     // loop through devices and compare if it is device
-    for(int i = 0; i < devicesLen; i++) {
+    for(int i = 0; i < devicesLen; i++) {        
         if(strcmp(devices[i], device) == 0) {
-            // free devices then return true
             free(devices);
             return 1;
         }
@@ -111,7 +111,7 @@ int devicemanager_has_device(char* device) {
     return 0;
 }
 
-int devicemanager_get_device_property(char* device, char* interface, char* property, DBusMessage** msg) {
+int devicemanager_get_device_property(char* device, char* interface, char* property, DBusMessage** message) {
     // if the device is not found return none
     if(!devicemanager_has_device(device)) {
         // return -1 if no device found
@@ -119,16 +119,18 @@ int devicemanager_get_device_property(char* device, char* interface, char* prope
     }
 
     // create char* for path and devpath
-    char* devPathStr = "/org/razer/device/";
-    char* pathStr = malloc(strlen(devPathStr) + strlen(device) + 1);
+    size_t pathStrLen = strlen(device) + 19;
+    char* pathStr = malloc(pathStrLen);
     
     // copy devpathstr contents to pathstr
-    strcpy(pathStr, devPathStr);
+    strcpy(pathStr, "/org/razer/device/");
     // append device id to pathstr
     strcat(pathStr, device);
+    // add null terminator
+    pathStr[pathStrLen - 1] = 0;
 
     // send message to dbus sessionbus getting device type
-    send_message(DBUS_BUS_SESSION, "org.razer", pathStr, interface, property, msg);
+    send_message(DBUS_BUS_SESSION, "org.razer", pathStr, interface, property, message);
     // free pathstr
     free(pathStr);
 
@@ -142,7 +144,7 @@ int devicemanager_call_device_method_no_args(char* device, char* interface, char
         // return -1 if no device found
         return -1;
     }
-
+    
     // create char* for path and devpath
     char* devPathStr = "/org/razer/device/";
     char* pathStr = malloc(strlen(devPathStr) + strlen(device) + 1);
@@ -156,7 +158,7 @@ int devicemanager_call_device_method_no_args(char* device, char* interface, char
     send_message_no_reply(DBUS_BUS_SESSION, "org.razer", pathStr, interface, property);
     // free pathstr
     free(pathStr);
-
+    
     // return success
     return SUCCESS;
 }
@@ -167,24 +169,27 @@ DeviceType devicemanager_get_device_type(char* device) {
         return NONE;
     }
 
-    // create iter for getting argument
-    DBusMessage* msg;
+    // create msg, iter for getting argument
+    DBusMessage* message;
     DBusMessageIter iter;
+
     int code;
 
-    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getDeviceType", &msg) <= -1) {
+    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getDeviceType", &message) <= -1) {
         printf("GetDeviceType Error: %d", code);
 
         return NONE;
     }
 
-    dbus_message_iter_init(msg, &iter);
-    dbus_message_unref(msg);
+    dbus_message_iter_init(message, &iter);
 
     // create char* for iter return value
     char* type;
     // get string from message arg
     dbus_message_iter_get_basic(&iter, &type);
+
+    // unref message
+    dbus_message_unref(message);
 
     if(strcmp(type, "keyboard") == 0) {
         // return keyboard if type == keyboard
@@ -205,14 +210,14 @@ char* devicemanager_get_device_name(char* device) {
     }
 
     // create message variable
-    DBusMessage* msg;
+    DBusMessage* message;
 
     // create iter for getting message arguments
     DBusMessageIter iter;
     int code;
 
     // if error return nothing
-    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getDeviceName", &msg) <= -1) {
+    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getDeviceName", &message) <= -1) {
         printf("GetDeviceName Error: %d", code);
 
         return NULL;
@@ -222,12 +227,13 @@ char* devicemanager_get_device_name(char* device) {
     char* name;
 
     // get args from message
-    dbus_message_iter_init(msg, &iter);
+    dbus_message_iter_init(message, &iter);
 
     // get string from message arg
     dbus_message_iter_get_basic(&iter, &name);
-    // unref msg
-    dbus_message_unref(msg);
+
+    // free return value
+    dbus_message_unref(message);
 
     // return name string
     return name;
@@ -241,20 +247,21 @@ struct VIDPID devicemanager_get_device_vidpid(char* device) {
         return VIDPID;
     }
 
-    // create iter for getting argument
-    DBusMessage* msg;
+    // create message, iter for getting arguments
+    DBusMessage* message;
     DBusMessageIter iter, values;
+
     int code;
 
     // if error return nothing
-    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getVidPid", &msg) <= -1) {
+    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getVidPid", &message) <= -1) {
         printf("GetDeviceVIDPID Error: %d", code);
 
         return VIDPID;
     }
 
     // get args from msg
-    dbus_message_iter_init(msg, &iter);
+    dbus_message_iter_init(message, &iter);
     // get int[2] from first arg
     dbus_message_iter_recurse(&iter, &values);
 
@@ -268,8 +275,8 @@ struct VIDPID devicemanager_get_device_vidpid(char* device) {
     // get int from array
     dbus_message_iter_get_basic(&values, &pid);
 
-    // unref msg
-    dbus_message_unref(msg);
+    // unref pending
+    dbus_message_unref(message);
 
     // set vidint to vid
     VIDPID.vidInt = vid;
@@ -291,22 +298,22 @@ int devicemanager_get_device_matrix(char* device, struct matrix* matrix) {
         return -1;
     }
 
-    // create msg variable
-    DBusMessage* msg;
+    // create message variable
+    DBusMessage* message;
 
     // create iter for getting arguments
     DBusMessageIter iter, values;
     int code;
 
     // if error return nothing
-    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getMatrixDimensions", &msg) <= -1) {
+    if(code = devicemanager_get_device_property(device, "razer.device.misc", "getMatrixDimensions", &message) <= -1) {
         printf("GetDeviceMatrix Error: %d", code);
 
         return -1;
     }
 
     // initialize iter value
-    dbus_message_iter_init(msg, &iter); 
+    dbus_message_iter_init(message, &iter); 
     // get int[2] from first arg
     dbus_message_iter_recurse(&iter, &values);
     
@@ -324,6 +331,9 @@ int devicemanager_get_device_matrix(char* device, struct matrix* matrix) {
     dbus_message_iter_get_basic(&values, &val);
     // set matrix cols to val
     matrix->cols = val;
+
+    // free return value
+    dbus_message_unref(message);
 
     // return name string
     return SUCCESS;

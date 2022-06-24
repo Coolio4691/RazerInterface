@@ -16,11 +16,11 @@ int mouse_from_id(char* id, struct mouse* mouse) {
 
 
 void mouse_draw(struct mouse* mouse) {
+    
     unsigned char* bytes;
-    size_t bytesSize;
 
-    // get bytes 
-    lighting_colour_bytes(&mouse->lighting, &bytes, &bytesSize);
+    // get lighting array bytes 
+    size_t bytesSize = lighting_colour_bytes(&mouse->lighting, &bytes);
 
     // create connection and error variable
     DBusError err;

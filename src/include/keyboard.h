@@ -12,6 +12,7 @@ struct keyboard {
 };
 
 int keyboard_from_id(char* id, struct keyboard* keyboard);
+void keyboard_free(struct keyboard* keyboard);
 
 void keyboard_draw(struct keyboard* keyboard);
 

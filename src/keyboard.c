@@ -23,6 +23,10 @@ int keyboard_from_id(char* id, struct keyboard* keyboard) {
     return 0;
 }
 
+void keyboard_free(struct keyboard* keyboard) {
+    device_lighting_free(&keyboard->lighting);
+}
+
 void keyboard_draw(struct keyboard* keyboard) {
     // if the device is not found return
     if(!devicemanager_has_device(keyboard->id)) {
@@ -93,6 +97,7 @@ void keyboard_draw(struct keyboard* keyboard) {
     dbus_error_free(&err); 
     // flush connection
     dbus_connection_flush(con);
+    dbus_connection_unref(con);
 
 
     // call setcustom method

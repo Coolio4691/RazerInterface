@@ -16,6 +16,7 @@ struct lighting {
 };
 
 int device_lighting_init(char* device, struct lighting* lighting);
+void device_lighting_free(struct lighting* lighting);
 
 void device_lighting_reset(struct lighting* lighting);
 

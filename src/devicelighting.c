@@ -21,6 +21,9 @@ int device_lighting_init(char* device, struct lighting* lighting) {
     return code;
 }
 
+void device_lighting_free(struct lighting* lighting) {
+    free(lighting->colourArray);
+}
 
 void device_lighting_reset(struct lighting* lighting) {
     // set all values to empty in array

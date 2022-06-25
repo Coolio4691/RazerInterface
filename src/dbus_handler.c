@@ -36,6 +36,7 @@ DBusHandlerCode send_message(DBusBusType bus, char* bus_name, char* path, char* 
     dbus_message_unref(msg);
     // flush connection
     dbus_connection_flush(con);
+    dbus_connection_unref(con);
 
     return SUCCESS;
 }
@@ -80,6 +81,7 @@ DBusHandlerCode send_message_no_reply(DBusBusType bus, char* bus_name, char* pat
     dbus_error_free(&err); 
     // flush connection
     dbus_connection_flush(con);
+    dbus_connection_unref(con);
 
     // return successcode
     return SUCCESS;

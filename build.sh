@@ -2,7 +2,7 @@
 
 mkdir -p build
 
-cmake --build ./build --config Debug --target all -j 8 --
+cmake --build ./build --config Release --target all -j 8 --
 cd build
 sudo ninja install
 

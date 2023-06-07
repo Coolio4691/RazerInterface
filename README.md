@@ -14,6 +14,3 @@ can be used from PKG-Config with name razer
 
 ## Dependencies
 Requires DBus
-
-### Bugs
-Might have a few memory leaks & bugs (which I will try to fix.)
